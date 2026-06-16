@@ -10,9 +10,9 @@ public class Cards : NetworkBehaviour
     [Header("References")]
     [SerializeField] private Card[] cardList;
 
+    public static Cards Main { get; private set; }
     private static Card[] cards;
     public static NetworkList<int> RandomCards;
-    public static Cards Main { get; private set; }
     #endregion
 
     #region Call When Game Start

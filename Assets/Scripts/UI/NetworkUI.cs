@@ -1,12 +1,13 @@
-using Unity.Netcode;
-using UnityEngine;
-using UnityEngine.UI;
-using Unity.Netcode.Transports.UTP;
-using TMPro;
+using System;
 using System.Collections;
-using System.Net;
-using System.Net.Sockets;
+using TMPro;
+using Unity.Netcode;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
+using Unity.Services.Multiplayer;
+using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class NetworkUI : NetworkBehaviour
 {
@@ -16,37 +17,40 @@ public class NetworkUI : NetworkBehaviour
     [SerializeField] private Button btn;
     [SerializeField] private GameObject failScene;
     [SerializeField] private GameObject lobbyScene;
+    [SerializeField] private GameObject joinScene;
     [SerializeField] private GameObject playerName;
     [SerializeField] private TextMeshProUGUI text;
+    [SerializeField] private GameObject roomListGrid;
+
+    [Header("Prefabs")]
+    [SerializeField] private GameObject roomDisplay;
+
+    private ISession session;
     #endregion
 
     #region Call When Game Start
-    private void Awake()
+    private async void Awake()
     {
         if (PlayerPrefs.HasKey("Player_Name"))
         {
             playerName.GetComponentInChildren<TMP_InputField>().text = PlayerPrefs.GetString("Player_Name");
             playerName.GetComponentInChildren<Button>().interactable = false;
         }
+        try
+        {
+            if (UnityServices.State == ServicesInitializationState.Uninitialized)
+                await UnityServices.InitializeAsync();
+            if (!AuthenticationService.Instance.IsSignedIn)
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error Create UGS: {e.Message}");
+        }
     }
     #endregion
 
-    private void GetLocalIP()
-    {
-        var host = Dns.GetHostEntry(Dns.GetHostName());
-        foreach (var ip in host.AddressList)
-        {
-            if (ip.AddressFamily == AddressFamily.InterNetwork)
-            {
-                if(ip.ToString().StartsWith("172.") || ip.ToString().StartsWith("10."))
-                {
-                    text.text = ip.ToString();
-                }
-            }
-        }
-    }
-
-    #region Register Event
+    #region Event Register & UnRegister
     private void Start()
     {
         NetworkManager.Singleton.OnServerStopped += HandleStopped;
@@ -54,6 +58,15 @@ public class NetworkUI : NetworkBehaviour
         NetworkManager.Singleton.ConnectionApprovalCallback += ApproveConnection;
         NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
         NetworkManager.Singleton.OnClientDisconnectCallback += HandleClientDisconnected;
+    }
+
+    private void UnRegisterEvent()
+    {
+        NetworkManager.Singleton.OnServerStopped -= HandleStopped;
+        NetworkManager.Singleton.OnClientStopped -= HandleStopped;
+        NetworkManager.Singleton.ConnectionApprovalCallback -= ApproveConnection;
+        NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
+        NetworkManager.Singleton.OnClientDisconnectCallback -= HandleClientDisconnected;
     }
     #endregion
 
@@ -73,7 +86,7 @@ public class NetworkUI : NetworkBehaviour
             StartCoroutine(Delay());
         }
     }
-    
+
     private IEnumerator Delay()
     {
         yield return new WaitForSeconds(0.5f);
@@ -99,79 +112,71 @@ public class NetworkUI : NetworkBehaviour
         }
         failScene.SetActive(true);
         failScene.transform.GetChild(1).gameObject.SetActive(true);
-        Debug.Log(NetworkManager.Singleton.DisconnectReason);
     }
 
-    public void DisconnectGame()
+    public async void DisconnectGame()
     {
-        NetworkManager.Singleton.Shutdown();
-        UnRegisterEvent();
-        SceneManager.LoadScene(0);
-    }
-    #endregion
-
-    #region Set IP To Connect To Server
-    public void SetIpAddress(string input)
-    {
-        NetworkManager.Singleton.GetComponent<UnityTransport>().ConnectionData.Address = input;
-    }
-    #endregion
-
-    #region Start Server
-    public void StartHost()
-    {
-        NetworkManager.Singleton.StartHost();
-        GetLocalIP();
-        text.gameObject.SetActive(true);
-    }
-    #endregion
-
-    #region Client Join Game
-    private IEnumerator TryConnect()
-    {
-        float waitTime = 0;
-        while (!NetworkManager.Singleton.IsConnectedClient && waitTime < 5)
+        try
         {
-            waitTime += Time.deltaTime;
-            yield return null;
+            if (session != null)
+            {
+                await session.LeaveAsync();
+                UnRegisterEvent();
+                session = null;
+                SceneManager.LoadScene(0);
+            }
         }
-        if (!NetworkManager.Singleton.IsConnectedClient)
+        catch (Exception e)
         {
-            failScene.SetActive(true);
-            failScene.transform.GetChild(0).gameObject.SetActive(true);
-            NetworkManager.Singleton.Shutdown();
-        }
-    }
-
-    public void StartClient()
-    {
-        SetIpAddress(input.text);
-        if (NetworkManager.Singleton.ConnectedClientsIds.Count < 6)
-        {
-            NetworkManager.Singleton.StartClient();
-            StartCoroutine(TryConnect());
-        }
-        else
-        {
-            failScene.SetActive(true);
-            failScene.transform.GetChild(0).gameObject.SetActive(true);
-            failScene.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "Server Is Full";
-            NetworkManager.Singleton.Shutdown();
+            Debug.LogWarning(e);
         }
     }
     #endregion
 
-    #region Enable Button When Input IP
-    public void InputIp()
+    #region Create or Join Game
+    public async void StartHost()
+    {
+        try
+        {
+            session = await MultiplayerService.Instance.CreateSessionAsync(
+                new SessionOptions()
+                {
+                    MaxPlayers = 8,
+                    Name = PlayerPrefs.GetString("Player_Name") + "'s Room",
+                }.WithRelayNetwork()
+            );
+            text.text = $"Code: {session.Code}";
+            text.gameObject.SetActive(true);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+        }
+    }
+
+    public async void StartClient()
+    {
+        string code = input.text.Trim();
+        if (string.IsNullOrEmpty(code))
+            return;
+        try
+        {
+            session = await MultiplayerService.Instance.JoinSessionByCodeAsync(code);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+        }
+    }
+    #endregion
+
+    #region Enable Button When Room Code
+    public void InputCode()
     {
         if (string.IsNullOrEmpty(input.text))
-        {
             btn.interactable = false;
-        }
         else
-        {
             btn.interactable = true;
-        }
     }
     #endregion
 
@@ -179,15 +184,11 @@ public class NetworkUI : NetworkBehaviour
     public void ChangeInputName()
     {
         var button = playerName.GetComponentInChildren<Button>();
-        if (string.IsNullOrEmpty(playerName.GetComponentInChildren<TMP_InputField>().text) 
-            || playerName.GetComponentInChildren<TMP_InputField>().text.Length > 15)
-        {
+        var inputField = playerName.GetComponentInChildren<TMP_InputField>();
+        if (string.IsNullOrEmpty(inputField.text) || inputField.text.Length > 15)
             button.interactable = false;
-        }
         else
-        {
             button.interactable = true;
-        }
     }
 
     public void SavePlayerName()
@@ -205,14 +206,50 @@ public class NetworkUI : NetworkBehaviour
     }
     #endregion
 
-    #region Unregister Event
-    private void UnRegisterEvent()
+    public async void RefreshSessionList()
     {
-        NetworkManager.Singleton.OnServerStopped -= HandleStopped;
-        NetworkManager.Singleton.OnClientStopped -= HandleStopped;
-        NetworkManager.Singleton.ConnectionApprovalCallback -= ApproveConnection;
-        NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
-        NetworkManager.Singleton.OnClientDisconnectCallback -= HandleClientDisconnected;
+        try
+        {
+            QuerySessionsOptions queryOptions = new()
+            {
+                Count = 20
+            };
+            QuerySessionsResults queryResults = await MultiplayerService.Instance.QuerySessionsAsync(queryOptions);
+            Clear();
+            foreach (ISessionInfo session in queryResults.Sessions)
+            {
+                var d = Instantiate(roomDisplay, transform.position, Quaternion.identity, roomListGrid.transform);
+                d.GetComponent<Button>().onClick.AddListener(() => OnJoinSession(session.Id));
+                d.GetComponentInChildren<TextMeshProUGUI>().text = session.Name;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e.Message);
+        }
     }
-    #endregion
+
+    private void Clear()
+    {
+        if (roomListGrid.transform.childCount < 1)
+            return;
+        for (int i = 0; i < roomListGrid.transform.childCount; i++)
+        {
+            Destroy(roomListGrid.transform.GetChild(i).gameObject);
+        }
+    }
+
+    public async void OnJoinSession(string sessionId)
+    {
+        joinScene.SetActive(false);
+        try
+        {
+            session = await MultiplayerService.Instance.JoinSessionByIdAsync(sessionId);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+            joinScene.SetActive(true);
+        }
+    }
 }

@@ -127,7 +127,7 @@ public class Rpc : NetworkBehaviour
     [ClientRpc]
     private void ResetDisplayClientRpc()
     {
-        Lobby.Main.Display();
+        Lobby.Main.DisplayPlayerUI();
     }
     #endregion
 

@@ -1,10 +1,9 @@
-using System.Collections.Generic;
-using UnityEngine;
-using Unity.Netcode;
-using UnityEngine.UI;
-using TMPro;
 using System.Collections;
-using Unity.Collections;
+using System.Collections.Generic;
+using TMPro;
+using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class Lobby : NetworkBehaviour
 {
@@ -13,11 +12,11 @@ public class Lobby : NetworkBehaviour
     [SerializeField] private GameObject gameScene;
     [SerializeField] private Button start;
     [SerializeField] private TextMeshProUGUI text;
-    [SerializeField] private GameObject grid;
+    [SerializeField] private GameObject playListGrid;
     [SerializeField] private GameObject lobbyScene;
 
     [Header("Prefabs")]
-    [SerializeField] private GameObject display;
+    [SerializeField] private GameObject playerDisplay;
 
     public NetworkVariable<bool> IsGameStarted { get; private set; }
     public static Lobby Main { get; private set; }
@@ -84,7 +83,7 @@ public class Lobby : NetworkBehaviour
         lobbyScene.transform.GetChild(0).gameObject.SetActive(true);
         start.gameObject.SetActive(false);
         text.gameObject.SetActive(false);
-        Display();
+        DisplayPlayerUI();
         UI.Main.ClearUpdateUI();
         if (PlayersList[0].name == NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>().PlayerName.Value.ToString())
         {
@@ -94,8 +93,7 @@ public class Lobby : NetworkBehaviour
         text.gameObject.SetActive(true);
     }
 
-    
-    public void Display()
+    public void DisplayPlayerUI()
     {
         Clear();
         if (PlayersList.Count <= 1)
@@ -104,7 +102,7 @@ public class Lobby : NetworkBehaviour
         }
         foreach (Player p in PlayersList)
         {
-            var d = Instantiate(display, transform.position, Quaternion.identity, grid.transform);
+            var d = Instantiate(playerDisplay, transform.position, Quaternion.identity, playListGrid.transform);
             d.GetComponentInChildren<TextMeshProUGUI>().text = p.name;
         }
         if (NetworkManager.Singleton.ConnectedClientsIds.Count > 1)
@@ -115,13 +113,13 @@ public class Lobby : NetworkBehaviour
 
     private void Clear()
     {
-        if (grid.transform.childCount < 1)
+        if (playListGrid.transform.childCount < 1)
         {
             return;
         }
-        for (int i = 0; i < grid.transform.childCount; i++)
+        for (int i = 0; i < playListGrid.transform.childCount; i++)
         {
-            Destroy(grid.transform.GetChild(i).gameObject);
+            Destroy(playListGrid.transform.GetChild(i).gameObject);
         }
     }
 
