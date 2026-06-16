@@ -12,7 +12,7 @@ public class Cards : NetworkBehaviour
 
     public static Cards Main { get; private set; }
     private static Card[] cards;
-    public static NetworkList<int> RandomCards;
+    public static NetworkList<int> RandomCards = new();
     #endregion
 
     #region Call When Game Start
@@ -118,12 +118,6 @@ public class Cards : NetworkBehaviour
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void CardRemoveServerRpc()
-    {
-        CardRemoveClientRpc();
-    }
-
-    [ClientRpc]
-    public void CardRemoveClientRpc()
     {
         RandomCards.Remove(RandomCards[^1]);
     }
