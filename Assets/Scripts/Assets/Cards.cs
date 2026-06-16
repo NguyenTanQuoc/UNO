@@ -115,4 +115,16 @@ public class Cards : NetworkBehaviour
         Game.Main.ContinueServerRpc(Table.Main.CardList[^1]);
     }
     #endregion
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void CardRemoveServerRpc()
+    {
+        CardRemoveClientRpc();
+    }
+
+    [ClientRpc]
+    public void CardRemoveClientRpc()
+    {
+        RandomCards.Remove(RandomCards[^1]);
+    }
 }
