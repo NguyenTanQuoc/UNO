@@ -46,7 +46,7 @@ public class UNO : NetworkBehaviour
             {
                 CheckAI(p);
                 CardDeal(p);
-                Cards.RandomCards.Remove(Cards.RandomCards[^1]);
+                Cards.Main.CardRemoveServerRpc();
                 yield return new WaitForSeconds(0.5f);
             }
         }
@@ -55,7 +55,7 @@ public class UNO : NetworkBehaviour
             if (Cards.GetCardById(Cards.RandomCards[i]).cardType == Card.CardType.Number)
             {
                 Table.Main.UpdateCard(Cards.RandomCards[i]);
-                Cards.RandomCards.Remove(Cards.RandomCards[i]);
+                Cards.Main.CardRemoveServerRpc();
                 break;
             }
         }
