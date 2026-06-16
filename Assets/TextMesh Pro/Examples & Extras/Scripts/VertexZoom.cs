@@ -64,14 +64,14 @@ namespace TMPro.Examples
             TMP_MeshInfo[] cachedMeshInfoVertexData = textInfo.CopyMeshInfoVertexData();
 
             // Allocations for sorting of the modified scales
-            List<float> modifiedCharScale = new();
-            List<int> scaleSortingOrder = new();
+            List<float> modifiedCharScale = new List<float>();
+            List<int> scaleSortingOrder = new List<int>();
 
             hasTextChanged = true;
 
             while (true)
             {
-                // Allocate new vertices 
+                // Allocate new vertices
                 if (hasTextChanged)
                 {
                     // Get updated vertex data
@@ -130,7 +130,7 @@ namespace TMPro.Examples
 
                     // Determine the random scale change for each character.
                     float randomScale = Random.Range(1f, 1.5f);
-                    
+
                     // Add modified scale and index
                     modifiedCharScale.Add(randomScale);
                     scaleSortingOrder.Add(modifiedCharScale.Count - 1);
@@ -178,13 +178,7 @@ namespace TMPro.Examples
 
                     // Updated modified vertex attributes
                     textInfo.meshInfo[i].mesh.vertices = textInfo.meshInfo[i].vertices;
-                    Vector4[] sourceUVs = textInfo.meshInfo[i].uvs0;
-                    Vector2[] convertedUVs = new Vector2[sourceUVs.Length];
-                    for (int j = 0; j < sourceUVs.Length; j++)
-                    {
-                        convertedUVs[j] = new Vector2(sourceUVs[j].x, sourceUVs[j].y);
-                    }
-                    textInfo.meshInfo[i].mesh.uv = convertedUVs;
+                    textInfo.meshInfo[i].mesh.SetUVs(0, textInfo.meshInfo[i].uvs0);
                     textInfo.meshInfo[i].mesh.colors32 = textInfo.meshInfo[i].colors32;
 
                     m_TextComponent.UpdateGeometry(textInfo.meshInfo[i].mesh, i);

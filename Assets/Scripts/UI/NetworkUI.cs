@@ -4,7 +4,6 @@ using UnityEngine.UI;
 using Unity.Netcode.Transports.UTP;
 using TMPro;
 using System.Collections;
-using WebSocketSharp;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine.SceneManagement;
@@ -165,7 +164,7 @@ public class NetworkUI : NetworkBehaviour
     #region Enable Button When Input IP
     public void InputIp()
     {
-        if (input.text.IsNullOrEmpty())
+        if (string.IsNullOrEmpty(input.text))
         {
             btn.interactable = false;
         }
@@ -180,7 +179,8 @@ public class NetworkUI : NetworkBehaviour
     public void ChangeInputName()
     {
         var button = playerName.GetComponentInChildren<Button>();
-        if (playerName.GetComponentInChildren<TMP_InputField>().text.IsNullOrEmpty() || playerName.GetComponentInChildren<TMP_InputField>().text.Length > 15)
+        if (string.IsNullOrEmpty(playerName.GetComponentInChildren<TMP_InputField>().text) 
+            || playerName.GetComponentInChildren<TMP_InputField>().text.Length > 15)
         {
             button.interactable = false;
         }

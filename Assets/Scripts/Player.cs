@@ -3,6 +3,7 @@ using TMPro;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class Player : NetworkBehaviour
@@ -119,7 +120,7 @@ public class Player : NetworkBehaviour
                 IsUNO.Value = true;
             }
         }
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             foreach(var id in Cards.RandomCards)
             {

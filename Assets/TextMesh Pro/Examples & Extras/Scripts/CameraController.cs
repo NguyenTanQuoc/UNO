@@ -1,10 +1,10 @@
 using UnityEngine;
-using System.Collections;
-
+using UnityEngine.InputSystem;
+using TouchPhase = UnityEngine.InputSystem.TouchPhase;
+using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 namespace TMPro.Examples
 {
-    
     public class CameraController : MonoBehaviour
     {
         public enum CameraModes { Follow, Isometric, Free }
@@ -46,8 +46,8 @@ namespace TMPro.Examples
         //private float prev_ZoomDelta;
 
 
-        //private const string event_SmoothingValue = "Slider - Smoothing Value";
-        //private const string event_FollowDistance = "Slider - Camera Zoom";
+        private const string event_SmoothingValue = "Slider - Smoothing Value";
+        private const string event_FollowDistance = "Slider - Camera Zoom";
 
 
         void Awake()
@@ -129,36 +129,29 @@ namespace TMPro.Examples
 
             // Check Mouse Wheel Input prior to Shift Key so we can apply multiplier on Shift for Scrolling
             mouseWheel = Input.GetAxis("Mouse ScrollWheel");
-
             float touchCount = Input.touchCount;
-
-            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) || touchCount > 0)
+            if (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed || touchCount > 0)
             {
                 mouseWheel *= 10;
-
-                if (Input.GetKeyDown(KeyCode.I))
+                if (Keyboard.current.iKey.wasPressedThisFrame)
                     CameraMode = CameraModes.Isometric;
-
-                if (Input.GetKeyDown(KeyCode.F))
+                if (Keyboard.current.fKey.wasPressedThisFrame)
                     CameraMode = CameraModes.Follow;
-
-                if (Input.GetKeyDown(KeyCode.S))
+                if (Keyboard.current.sKey.wasPressedThisFrame)
                     MovementSmoothing = !MovementSmoothing;
 
-
                 // Check for right mouse button to change camera follow and elevation angle
-                if (Input.GetMouseButton(1))
+                if (Mouse.current.rightButton.isPressed)
                 {
                     mouseY = Input.GetAxis("Mouse Y");
                     mouseX = Input.GetAxis("Mouse X");
-
                     if (mouseY > 0.01f || mouseY < -0.01f)
                     {
                         ElevationAngle -= mouseY * MoveSensitivity;
+
                         // Limit Elevation angle between min & max values.
                         ElevationAngle = Mathf.Clamp(ElevationAngle, MinElevationAngle, MaxElevationAngle);
                     }
-
                     if (mouseX > 0.01f || mouseX < -0.01f)
                     {
                         OrbitalAngle += mouseX * MoveSensitivity;
@@ -170,7 +163,7 @@ namespace TMPro.Examples
                 }
 
                 // Get Input from Mobile Device
-                if (touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Moved)
+                if (touchCount == 1 && Touch.activeTouches[0].phase == TouchPhase.Moved)
                 {
                     Vector2 deltaPosition = Input.GetTouch(0).deltaPosition;
 
@@ -192,14 +185,12 @@ namespace TMPro.Examples
                         if (OrbitalAngle < 0)
                             OrbitalAngle += 360;
                     }
-
                 }
 
                 // Check for left mouse button to select a new CameraTarget or to reset Follow position
                 if (Input.GetMouseButton(0))
                 {
                     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-
                     if (Physics.Raycast(ray, out RaycastHit hit, 300, 1 << 10 | 1 << 11 | 1 << 12 | 1 << 14))
                     {
                         if (hit.transform == CameraTarget)
@@ -213,11 +204,8 @@ namespace TMPro.Examples
                             OrbitalAngle = 0;
                             MovementSmoothing = previousSmoothing;
                         }
-
                     }
                 }
-
-
                 if (Input.GetMouseButton(2))
                 {
                     if (dummyTarget == null)
@@ -253,25 +241,19 @@ namespace TMPro.Examples
             // Check Pinching to Zoom in - out on Mobile device
             if (touchCount == 2)
             {
-                Touch touch0 = Input.GetTouch(0);
-                Touch touch1 = Input.GetTouch(1);
-
-                Vector2 touch0PrevPos = touch0.position - touch0.deltaPosition;
-                Vector2 touch1PrevPos = touch1.position - touch1.deltaPosition;
-
+                Touch touch0 = Touch.activeTouches[0];
+                Touch touch1 = Touch.activeTouches[1];
+                Vector2 touch0PrevPos = touch0.screenPosition - touch0.delta;
+                Vector2 touch1PrevPos = touch1.screenPosition - touch1.delta;
                 float prevTouchDelta = (touch0PrevPos - touch1PrevPos).magnitude;
-                float touchDelta = (touch0.position - touch1.position).magnitude;
-
+                float touchDelta = (touch0.screenPosition - touch1.screenPosition).magnitude;
                 float zoomDelta = prevTouchDelta - touchDelta;
-
                 if (zoomDelta > 0.01f || zoomDelta < -0.01f)
                 {
                     FollowDistance += zoomDelta * 0.25f;
                     // Limit FollowDistance between min & max values.
                     FollowDistance = Mathf.Clamp(FollowDistance, MinFollowDistance, MaxFollowDistance);
                 }
-
-
             }
 
             // Check MouseWheel to Zoom in-out

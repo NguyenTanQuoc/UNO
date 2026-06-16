@@ -1,5 +1,12 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.InputSystem;
+
+
+#pragma warning disable 0618 // Disabled warning due to SetVertices being deprecated until new release with SetMesh() is available.
 
 namespace TMPro.Examples
 {
@@ -11,6 +18,7 @@ namespace TMPro.Examples
         private RectTransform m_TextPopup_RectTransform;
         private TextMeshProUGUI m_TextPopup_TMPComponent;
         private const string k_LinkText = "You have selected link <#ffff00>";
+        private const string k_WordText = "Word Index: <#ffff00>";
 
 
         private TextMeshProUGUI m_TextMeshPro;
@@ -86,7 +94,8 @@ namespace TMPro.Examples
                     m_lastIndex = -1;
                 }
 
-                if (charIndex != -1 && charIndex != m_lastIndex && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
+                if (charIndex != -1 && charIndex != m_lastIndex && (Keyboard.current.leftShiftKey.isPressed 
+                    || Keyboard.current.rightShiftKey.isPressed))
                 {
                     m_lastIndex = charIndex;
 
@@ -130,7 +139,7 @@ namespace TMPro.Examples
                     vertices[vertexIndex + 3] = vertices[vertexIndex + 3] + offset;
 
                     // Change Vertex Colors of the highlighted character
-                    Color32 c = new(255, 255, 192, 255);
+                    Color32 c = new Color32(255, 255, 192, 255);
 
                     // Get a reference to the vertex color
                     Color32[] vertexColors = m_TextMeshPro.textInfo.meshInfo[materialIndex].colors32;
@@ -151,7 +160,7 @@ namespace TMPro.Examples
                     // We do this to make sure this character is rendered last and over other characters.
                     meshInfo.SwapVertexData(vertexIndex, lastVertexIndex);
 
-                    // Need to update the appropriate 
+                    // Need to update the appropriate
                     m_TextMeshPro.UpdateVertexData(TMP_VertexDataUpdateFlags.All);
                 }
                 #endregion
@@ -194,12 +203,11 @@ namespace TMPro.Examples
                     m_selectedWord = -1;
                 }
 
-
                 // Word Selection Handling
-                if (wordIndex != -1 && wordIndex != m_selectedWord && !(Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
+                if (wordIndex != -1 && wordIndex != m_selectedWord && !(Keyboard.current.leftShiftKey.isPressed 
+                    || Keyboard.current.rightShiftKey.isPressed))
                 {
                     m_selectedWord = wordIndex;
-
                     TMP_WordInfo wInfo = m_TextMeshPro.textInfo.wordInfo[wordIndex];
 
                     // Iterate through each of the characters of the word.
@@ -209,14 +217,11 @@ namespace TMPro.Examples
 
                         // Get the index of the material / sub text object used by this character.
                         int meshIndex = m_TextMeshPro.textInfo.characterInfo[characterIndex].materialReferenceIndex;
-
                         int vertexIndex = m_TextMeshPro.textInfo.characterInfo[characterIndex].vertexIndex;
 
                         // Get a reference to the vertex color
                         Color32[] vertexColors = m_TextMeshPro.textInfo.meshInfo[meshIndex].colors32;
-
                         Color32 c = vertexColors[vertexIndex + 0].Tint(0.75f);
-
                         vertexColors[vertexIndex + 0] = c;
                         vertexColors[vertexIndex + 1] = c;
                         vertexColors[vertexIndex + 2] = c;
@@ -250,7 +255,8 @@ namespace TMPro.Examples
 
                     // Debug.Log("Link ID: \"" + linkInfo.GetLinkID() + "\"   Link Text: \"" + linkInfo.GetLinkText() + "\""); // Example of how to retrieve the Link ID and Link Text.
 
-                    RectTransformUtility.ScreenPointToWorldPointInRectangle(m_TextMeshPro.rectTransform, Input.mousePosition, m_Camera, out Vector3 worldPointInRectangle);
+                    Vector3 worldPointInRectangle;
+                    RectTransformUtility.ScreenPointToWorldPointInRectangle(m_TextMeshPro.rectTransform, Input.mousePosition, m_Camera, out worldPointInRectangle);
 
                     switch (linkInfo.GetLinkID())
                     {
@@ -278,7 +284,7 @@ namespace TMPro.Examples
                     m_lastIndex = -1;
                 }
             }
-            
+
         }
 
 
@@ -532,7 +538,7 @@ namespace TMPro.Examples
             dst_uv2s[lastIndex + 2] = src_uv2s[lastIndex + 2];
             dst_uv2s[lastIndex + 3] = src_uv2s[lastIndex + 3];
 
-            // Need to update the appropriate 
+            // Need to update the appropriate
             m_TextMeshPro.UpdateVertexData(TMP_VertexDataUpdateFlags.All);
         }
     }
