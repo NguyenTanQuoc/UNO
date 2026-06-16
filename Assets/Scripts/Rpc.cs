@@ -127,15 +127,7 @@ public class Rpc : NetworkBehaviour
     [ClientRpc]
     private void ResetDisplayClientRpc()
     {
-        Lobby.Main.Display();
-    }
-    #endregion
-
-    #region Delete Card On Desk
-    [ClientRpc]
-    public void DeleteCardOnDeskClientRpc()
-    {
-        Cards.RandomCards.Remove(Cards.RandomCards[^1]);
+        Lobby.Main.DisplayPlayerUI();
     }
     #endregion
 
@@ -158,7 +150,7 @@ public class Rpc : NetworkBehaviour
     public void AddCardServerRpc()
     {
         AddCardClientRpc();
-        DeleteCardOnDeskClientRpc();
+        Cards.RandomCards.Remove(Cards.RandomCards[^1]);
         check = false;
         if (UNO.GetCurrentPlayer().Turn)
         {
