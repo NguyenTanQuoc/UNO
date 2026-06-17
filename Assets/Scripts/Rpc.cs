@@ -79,44 +79,76 @@ public class Rpc : NetworkBehaviour
     #endregion
 
     #region Delete Card On Player Hand
+
+
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    public void DeleteCardServerRpc(int id)
+    public void DeleteCardServerRpc(int cardId, int playerIndex)
     {
-        DeleteCardClientRpc(id);
+
+        DeleteCardClientRpc(cardId, playerIndex);
     }
 
+
     [ClientRpc]
-    public void DeleteCardClientRpc(int id)
+    public void DeleteCardClientRpc(int cardId, int playerIndex)
     {
-        UNO.GetCurrentPlayer().CardList.Remove(Cards.GetCardById(id));
-        UNO.GetCurrentPlayer().InSteak.Clear();
-        UNO.PlayerList[Game.CurrentPlayer].GetComponent<PlayerUI>().UpdateUI();
+  
+        var actionPlayer = UNO.PlayerList[playerIndex].GetComponent<Player>(); 
+
+        // 2. XÓA BÀI & CẬP NHẬT UI
+        actionPlayer.CardList.Remove(Cards.GetCardById(cardId));
+        actionPlayer.InSteak.Clear(); // Xóa lịch sử/trạng thái bài nếu cần
+
+        // Cập nhật lại giao diện của người chơi đó và giao diện bài trên bàn
+        UNO.PlayerList[playerIndex].GetComponent<PlayerUI>().UpdateUI();
         UI.Main.UpdateUICard();
-        if (UNO.GetCurrentPlayer().CardList.Count < 1)
+
+
+        if (actionPlayer.CardList.Count < 1)
         {
-            foreach (GameObject g in UNO.PlayerList)
-            {
-                g.transform.GetChild(0).gameObject.SetActive(false);
-            }
-            gameScenes.SetActive(false);
-            end.SetActive(true);
-            end.GetComponentInChildren<TextMeshProUGUI>().text = UNO.PlayerList[Game.CurrentPlayer].name + " Win Game";
-            StartCoroutine(Delay());
+            // Nếu người này hết bài, gọi hàm kết thúc game và truyền tên người thắng vào
+            TriggerEndGame(UNO.PlayerList[playerIndex].name);
         }
     }
 
+
+    private void TriggerEndGame(string winnerName)
+    {
+        // Ẩn UI của tất cả người chơi
+        foreach (GameObject g in UNO.PlayerList)
+        {
+            g.transform.GetChild(0).gameObject.SetActive(false);
+        }
+
+        // Ẩn màn hình chơi game và hiện màn hình kết quả (End)
+        gameScenes.SetActive(false);
+        end.SetActive(true);
+
+        // Ghi tên người chiến thắng lên Message Box
+        end.GetComponentInChildren<TextMeshProUGUI>().text = winnerName + " Win Game";
+
+        // Bắt đầu đếm ngược để khởi động lại ván
+        StartCoroutine(Delay());
+    }
+
+    // Hàm đếm ngược delay (ĐÃ SỬA LẠI ĐỂ SỬA LỖI KẸT LOBBY)
     private IEnumerator Delay()
     {
+        // 1. CHỈ DUY NHẤT SERVER mới được quyền đếm giờ và điều phối chuyển cảnh
         if (IsServer)
         {
             Lobby.Main.IsGameStarted.Value = false;
+
+            // 2. Tạm dừng 3 giây trên Server
+            yield return new WaitForSeconds(3);
+
+
+            end.SetActive(false);
+
+            Lobby.Main.TriggerRestartClientRpc();
         }
-        yield return new WaitForSeconds(3);
-        end.SetActive(false);
-        Lobby.Main.Restart();
     }
     #endregion
-
     #region Reset Lobby
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void ResetDisplayServerRpc()
