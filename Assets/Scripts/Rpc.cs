@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq;
 using TMPro;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -84,71 +85,56 @@ public class Rpc : NetworkBehaviour
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void DeleteCardServerRpc(int cardId, int playerIndex)
     {
-
         DeleteCardClientRpc(cardId, playerIndex);
     }
-
 
     [ClientRpc]
     public void DeleteCardClientRpc(int cardId, int playerIndex)
     {
-  
-        var actionPlayer = UNO.PlayerList[playerIndex].GetComponent<Player>(); 
+        // Lấy đúng người chơi vừa đánh bài
+        var actionPlayer = UNO.PlayerList[playerIndex].GetComponent<Player>();
 
-        // 2. XÓA BÀI & CẬP NHẬT UI
+        // Xóa bài & cập nhật giao diện
         actionPlayer.CardList.Remove(Cards.GetCardById(cardId));
-        actionPlayer.InSteak.Clear(); // Xóa lịch sử/trạng thái bài nếu cần
-
-        // Cập nhật lại giao diện của người chơi đó và giao diện bài trên bàn
+        actionPlayer.InSteak.Clear();
         UNO.PlayerList[playerIndex].GetComponent<PlayerUI>().UpdateUI();
         UI.Main.UpdateUICard();
 
-
+        // ---- CHỖ ÔNG TÌM NẰM Ở ĐÂY NÈ ----
+        // Kiểm tra tay bài của người vừa đánh
         if (actionPlayer.CardList.Count < 1)
         {
-            // Nếu người này hết bài, gọi hàm kết thúc game và truyền tên người thắng vào
-            TriggerEndGame(UNO.PlayerList[playerIndex].name);
+            // CHỈ SERVER mới có quyền tuyên bố kết thúc game để tránh loạn
+            if (IsServer)
+            {
+                // 1. Lấy tên người chiến thắng
+                string winnerName = UNO.PlayerList[playerIndex].name;
+
+                // 2. Kêu tất cả các máy hiện Message Box lên
+                ShowWinnerClientRpc(winnerName);
+
+                // 3. Server bắt đầu bấm giờ 3 giây
+                StartCoroutine(Delay());
+            }
         }
     }
 
-
-    private void TriggerEndGame(string winnerName)
-    {
-        // Ẩn UI của tất cả người chơi
-        foreach (GameObject g in UNO.PlayerList)
-        {
-            g.transform.GetChild(0).gameObject.SetActive(false);
-        }
-
-        // Ẩn màn hình chơi game và hiện màn hình kết quả (End)
-        gameScenes.SetActive(false);
-        end.SetActive(true);
-
-        // Ghi tên người chiến thắng lên Message Box
-        end.GetComponentInChildren<TextMeshProUGUI>().text = winnerName + " Win Game";
-
-        // Bắt đầu đếm ngược để khởi động lại ván
-        StartCoroutine(Delay());
-    }
-
-    // Hàm đếm ngược delay (ĐÃ SỬA LẠI ĐỂ SỬA LỖI KẸT LOBBY)
     private IEnumerator Delay()
     {
-        // 1. CHỈ DUY NHẤT SERVER mới được quyền đếm giờ và điều phối chuyển cảnh
-        if (IsServer)
-        {
-            Lobby.Main.IsGameStarted.Value = false;
+        // Đánh dấu game đã kết thúc
+        Lobby.Main.IsGameStarted.Value = false;
 
-            // 2. Tạm dừng 3 giây trên Server
-            yield return new WaitForSeconds(3);
+        // Chờ 3 giây
+        yield return new WaitForSeconds(3);
 
+        // Ẩn Message Box đi
+        end.SetActive(false);
 
-            end.SetActive(false);
-
-            Lobby.Main.TriggerRestartClientRpc();
-        }
+        // Gọi lệnh ClientRpc ở file Lobby để lôi TẤT CẢ cùng về Lobby
+        Lobby.Main.TriggerRestartClientRpc();
     }
     #endregion
+
     #region Reset Lobby
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void ResetDisplayServerRpc()
@@ -160,6 +146,24 @@ public class Rpc : NetworkBehaviour
     private void ResetDisplayClientRpc()
     {
         Lobby.Main.DisplayPlayerUI();
+    }
+    #endregion
+
+    #region ShowWinner Client
+    [ClientRpc]
+    public void ShowWinnerClientRpc(FixedString32Bytes winnerName)
+    {
+        // Ẩn UI vòng sáng/thông tin của các người chơi
+        foreach (GameObject g in UNO.PlayerList)
+        {
+            g.transform.GetChild(0).gameObject.SetActive(false);
+        }
+
+        // Ẩn màn chơi, bật màn hình Message Box
+        gameScenes.SetActive(false);
+        end.SetActive(true);
+
+        end.GetComponentInChildren<TextMeshProUGUI>().text = winnerName.ToString() + " Win Game";
     }
     #endregion
 
