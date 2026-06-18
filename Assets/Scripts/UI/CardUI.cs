@@ -92,10 +92,6 @@ public class CardUI : NetworkBehaviour, IPointerEnterHandler, IPointerExitHandle
     {
         if (isPointer)
         {
-            // Lấy vị trí của người chơi hiện tại đang thực hiện hành động click này
-            // (Nếu game ông dùng biến khác để lưu index của Local Player thì thay vào đây nhé)
-            int currentPlayerIndex = Game.CurrentPlayer;
-
             // Nếu lá bài KHÔNG phải là bài số (tức là bài chức năng: Cấm, Đảo chiều, +2, +4, Đổi màu...)
             if (currentCard.cardType != Card.CardType.Number)
             {
@@ -104,7 +100,7 @@ public class CardUI : NetworkBehaviour, IPointerEnterHandler, IPointerExitHandle
                 {
                     Desk.Main.DisableDraw();
                     // SỬA LỖI: Truyền thêm currentPlayerIndex vào hàm
-                    Rpc.Main.DeleteCardServerRpc(currentCard.Id, currentPlayerIndex);
+                    Rpc.Main.DeleteCardServerRpc(currentCard.Id);
                     Game.Main.Wild(currentCard);
                 }
                 // Xử lý cho các bài chức năng còn lại (Cấm, Đảo chiều, +2)
@@ -112,7 +108,7 @@ public class CardUI : NetworkBehaviour, IPointerEnterHandler, IPointerExitHandle
                 {
                     Desk.Main.DisableDraw();
                     // SỬA LỖI: Truyền thêm currentPlayerIndex vào hàm
-                    Rpc.Main.DeleteCardServerRpc(currentCard.Id, currentPlayerIndex);
+                    Rpc.Main.DeleteCardServerRpc(currentCard.Id);
                     Game.Main.NextTurnServerRpc(currentCard.Id);
                 }
             }
@@ -122,7 +118,7 @@ public class CardUI : NetworkBehaviour, IPointerEnterHandler, IPointerExitHandle
                 Desk.Main.DisableDraw();
                 Rpc.Main.ChangeTableCardServerRpc(currentCard.Id);
                 // SỬA LỖI: Truyền thêm currentPlayerIndex vào hàm
-                Rpc.Main.DeleteCardServerRpc(currentCard.Id, currentPlayerIndex);
+                Rpc.Main.DeleteCardServerRpc(currentCard.Id);
                 Game.Main.NextTurnServerRpc();
             }
         }

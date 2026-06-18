@@ -80,24 +80,22 @@ public class Rpc : NetworkBehaviour
     #endregion
 
     #region Delete Card On Player Hand
-
-
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    public void DeleteCardServerRpc(int cardId, int playerIndex)
+    public void DeleteCardServerRpc(int cardId)
     {
-        DeleteCardClientRpc(cardId, playerIndex);
+        DeleteCardClientRpc(cardId);
     }
 
     [ClientRpc]
-    public void DeleteCardClientRpc(int cardId, int playerIndex)
+    public void DeleteCardClientRpc(int cardId)
     {
         // Lấy đúng người chơi vừa đánh bài
-        var actionPlayer = UNO.PlayerList[playerIndex].GetComponent<Player>();
+        var actionPlayer = UNO.GetCurrentPlayer();
 
         // Xóa bài & cập nhật giao diện
         actionPlayer.CardList.Remove(Cards.GetCardById(cardId));
         actionPlayer.InSteak.Clear();
-        UNO.PlayerList[playerIndex].GetComponent<PlayerUI>().UpdateUI();
+        actionPlayer.GetComponent<PlayerUI>().UpdateUI();
         UI.Main.UpdateUICard();
 
         // ---- CHỖ ÔNG TÌM NẰM Ở ĐÂY NÈ ----
@@ -108,7 +106,7 @@ public class Rpc : NetworkBehaviour
             if (IsServer)
             {
                 // 1. Lấy tên người chiến thắng
-                string winnerName = UNO.PlayerList[playerIndex].name;
+                string winnerName = actionPlayer.name;
 
                 // 2. Kêu tất cả các máy hiện Message Box lên
                 ShowWinnerClientRpc(winnerName);
@@ -151,7 +149,7 @@ public class Rpc : NetworkBehaviour
 
     #region ShowWinner Client
     [ClientRpc]
-    public void ShowWinnerClientRpc(FixedString32Bytes winnerName)
+    public void ShowWinnerClientRpc(string winnerName)
     {
         // Ẩn UI vòng sáng/thông tin của các người chơi
         foreach (GameObject g in UNO.PlayerList)
