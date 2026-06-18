@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq;
 using TMPro;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -80,40 +81,55 @@ public class Rpc : NetworkBehaviour
 
     #region Delete Card On Player Hand
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    public void DeleteCardServerRpc(int id)
+    public void DeleteCardServerRpc(int cardId)
     {
-        DeleteCardClientRpc(id);
+        DeleteCardClientRpc(cardId);
     }
 
     [ClientRpc]
-    public void DeleteCardClientRpc(int id)
+    public void DeleteCardClientRpc(int cardId)
     {
-        UNO.GetCurrentPlayer().CardList.Remove(Cards.GetCardById(id));
-        UNO.GetCurrentPlayer().InSteak.Clear();
-        UNO.PlayerList[Game.CurrentPlayer].GetComponent<PlayerUI>().UpdateUI();
+        // Lấy đúng người chơi vừa đánh bài
+        var actionPlayer = UNO.GetCurrentPlayer();
+
+        // Xóa bài & cập nhật giao diện
+        actionPlayer.CardList.Remove(Cards.GetCardById(cardId));
+        actionPlayer.InSteak.Clear();
+        actionPlayer.GetComponent<PlayerUI>().UpdateUI();
         UI.Main.UpdateUICard();
-        if (UNO.GetCurrentPlayer().CardList.Count < 1)
+
+        // ---- CHỖ ÔNG TÌM NẰM Ở ĐÂY NÈ ----
+        // Kiểm tra tay bài của người vừa đánh
+        if (actionPlayer.CardList.Count < 1)
         {
-            foreach (GameObject g in UNO.PlayerList)
+            // CHỈ SERVER mới có quyền tuyên bố kết thúc game để tránh loạn
+            if (IsServer)
             {
-                g.transform.GetChild(0).gameObject.SetActive(false);
+                // 1. Lấy tên người chiến thắng
+                string winnerName = actionPlayer.name;
+
+                // 2. Kêu tất cả các máy hiện Message Box lên
+                ShowWinnerClientRpc(winnerName);
+
+                // 3. Server bắt đầu bấm giờ 3 giây
+                StartCoroutine(Delay());
             }
-            gameScenes.SetActive(false);
-            end.SetActive(true);
-            end.GetComponentInChildren<TextMeshProUGUI>().text = UNO.PlayerList[Game.CurrentPlayer].name + " Win Game";
-            StartCoroutine(Delay());
         }
     }
 
     private IEnumerator Delay()
     {
-        if (IsServer)
-        {
-            Lobby.Main.IsGameStarted.Value = false;
-        }
+        // Đánh dấu game đã kết thúc
+        Lobby.Main.IsGameStarted.Value = false;
+
+        // Chờ 3 giây
         yield return new WaitForSeconds(3);
+
+        // Ẩn Message Box đi
         end.SetActive(false);
-        Lobby.Main.Restart();
+
+        // Gọi lệnh ClientRpc ở file Lobby để lôi TẤT CẢ cùng về Lobby
+        Lobby.Main.TriggerRestartClientRpc();
     }
     #endregion
 
@@ -128,6 +144,24 @@ public class Rpc : NetworkBehaviour
     private void ResetDisplayClientRpc()
     {
         Lobby.Main.DisplayPlayerUI();
+    }
+    #endregion
+
+    #region ShowWinner Client
+    [ClientRpc]
+    public void ShowWinnerClientRpc(string winnerName)
+    {
+        // Ẩn UI vòng sáng/thông tin của các người chơi
+        foreach (GameObject g in UNO.PlayerList)
+        {
+            g.transform.GetChild(0).gameObject.SetActive(false);
+        }
+
+        // Ẩn màn chơi, bật màn hình Message Box
+        gameScenes.SetActive(false);
+        end.SetActive(true);
+
+        end.GetComponentInChildren<TextMeshProUGUI>().text = winnerName.ToString() + " Win Game";
     }
     #endregion
 

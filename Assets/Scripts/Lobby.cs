@@ -180,4 +180,10 @@ public class Lobby : NetworkBehaviour
         UI.Main.UpdateUI();
         UNO.Main.StartGame();
     }
+    [ClientRpc]
+    public void TriggerRestartClientRpc()
+    {
+       
+        Restart();
+    }
 }
