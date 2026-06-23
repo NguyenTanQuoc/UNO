@@ -312,7 +312,7 @@ public class Game : NetworkBehaviour
                     for (int i = 0; i < drawSteak4 * 4; i++)
                     {
                         UNO.GetCurrentPlayer().CardList.Add(Cards.GetCardById(Cards.RandomCards[^1]));
-                        Cards.RandomCards.Remove(Cards.RandomCards[^1]);
+                        Cards.Main.CardRemoveServerRpc();
                     }
                     UNO.GetCurrentPlayer().InSteak.Clear();
                     UNO.PlayerList[CurrentPlayer].GetComponent<PlayerUI>().UpdateUI();
@@ -385,7 +385,7 @@ public class Game : NetworkBehaviour
                     for (int i = 0; i < drawSteak2 * 2; i++)
                     {
                         UNO.GetCurrentPlayer().CardList.Add(Cards.GetCardById(Cards.RandomCards[^1]));
-                        Cards.RandomCards.Remove(Cards.RandomCards[^1]);
+                        Cards.Main.CardRemoveServerRpc();
                     }
                     UNO.GetCurrentPlayer().InSteak.Clear();
                     UNO.PlayerList[CurrentPlayer].GetComponent<PlayerUI>().UpdateUI();
