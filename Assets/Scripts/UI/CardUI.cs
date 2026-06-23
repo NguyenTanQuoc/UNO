@@ -64,7 +64,8 @@ public class CardUI : NetworkBehaviour, IPointerEnterHandler, IPointerExitHandle
 
     private bool IsNotLastInvalidCard()
     {
-        if (player.CardList.Count != 1) return true;
+        if (player.CardList.Count != 1) 
+            return true;
         return currentCard.cardType != Card.CardType.Draw_4 && currentCard.cardType != Card.CardType.Wild;
     }
 
@@ -92,32 +93,25 @@ public class CardUI : NetworkBehaviour, IPointerEnterHandler, IPointerExitHandle
     {
         if (isPointer)
         {
-            // Nếu lá bài KHÔNG phải là bài số (tức là bài chức năng: Cấm, Đảo chiều, +2, +4, Đổi màu...)
             if (currentCard.cardType != Card.CardType.Number)
             {
-                // Xử lý riêng cho bài Đổi màu (Wild) hoặc Thêm 4 (Draw_4)
                 if (currentCard.cardType == Card.CardType.Wild || currentCard.cardType == Card.CardType.Draw_4)
                 {
                     Desk.Main.DisableDraw();
-                    // SỬA LỖI: Truyền thêm currentPlayerIndex vào hàm
                     Rpc.Main.DeleteCardServerRpc(currentCard.Id);
                     Game.Main.Wild(currentCard);
                 }
-                // Xử lý cho các bài chức năng còn lại (Cấm, Đảo chiều, +2)
                 else
                 {
                     Desk.Main.DisableDraw();
-                    // SỬA LỖI: Truyền thêm currentPlayerIndex vào hàm
                     Rpc.Main.DeleteCardServerRpc(currentCard.Id);
                     Game.Main.NextTurnServerRpc(currentCard.Id);
                 }
             }
-            // Nếu lá bài LÀ bài số bình thường
             else
             {
                 Desk.Main.DisableDraw();
                 Rpc.Main.ChangeTableCardServerRpc(currentCard.Id);
-                // SỬA LỖI: Truyền thêm currentPlayerIndex vào hàm
                 Rpc.Main.DeleteCardServerRpc(currentCard.Id);
                 Game.Main.NextTurnServerRpc();
             }

@@ -112,7 +112,7 @@ public class Player : NetworkBehaviour
 
     private void Update()
     {
-        if (UNO.Main.Check && Lobby.Main.IsGameStarted.Value)
+        if (UNO.Main.IsMatchInProgress && Lobby.Main.IsGameStarted.Value)
         {
             UpdateTime();
             if (CardList.Count == 1)

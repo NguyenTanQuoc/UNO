@@ -4913,6 +4913,14 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 5559793628137662532}
     - target: {fileID: 2198848972745370090, guid: 8bc0e7b918a4bfc4cacd4c1d13db3dfb, type: 3}
+      propertyPath: Table
+      value: 
+      objectReference: {fileID: 5559793628137662532}
+    - target: {fileID: 2198848972745370090, guid: 8bc0e7b918a4bfc4cacd4c1d13db3dfb, type: 3}
+      propertyPath: CardDeal
+      value: 
+      objectReference: {fileID: 423746825545600863, guid: dd94fcfa39f35fa4d961112cf6f56430, type: 3}
+    - target: {fileID: 2198848972745370090, guid: 8bc0e7b918a4bfc4cacd4c1d13db3dfb, type: 3}
       propertyPath: cardDeal
       value: 
       objectReference: {fileID: 423746825545600863, guid: dd94fcfa39f35fa4d961112cf6f56430, type: 3}
@@ -4924,6 +4932,18 @@ PrefabInstance:
       propertyPath: Grid
       value: 
       objectReference: {fileID: 5559793628137662532}
+    - target: {fileID: 4539684955066931150, guid: 8bc0e7b918a4bfc4cacd4c1d13db3dfb, type: 3}
+      propertyPath: Table
+      value: 
+      objectReference: {fileID: 5559793628137662532}
+    - target: {fileID: 4539684955066931150, guid: 8bc0e7b918a4bfc4cacd4c1d13db3dfb, type: 3}
+      propertyPath: PlayerSlot
+      value: 
+      objectReference: {fileID: 3682810841907096243, guid: 7d554d3e66d762f4c91d1e9b63370426, type: 3}
+    - target: {fileID: 4539684955066931150, guid: 8bc0e7b918a4bfc4cacd4c1d13db3dfb, type: 3}
+      propertyPath: CardBackImage
+      value: 
+      objectReference: {fileID: 9080916560901471577, guid: 3afb06d25676ab74cb5a6598cdb48d18, type: 3}
     - target: {fileID: 4704413098303232193, guid: 8bc0e7b918a4bfc4cacd4c1d13db3dfb, type: 3}
       propertyPath: 'sprites.Array.data[9]'
       value: 
@@ -5759,7 +5779,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1023483080}
   - component: {fileID: 1023483081}
-  - component: {fileID: 1023483082}
   m_Layer: 5
   m_Name: JoinScene
   m_TagString: Untagged
@@ -5799,20 +5818,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 692b495587ac59d49baedaea5188a5b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1023483082
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1023483079}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 815f625bd96128e478eddd53dc7e5ac6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  roomListGrid: {fileID: 0}
-  roomDisplay: {fileID: 0}
 --- !u!1 &1026683073
 GameObject:
   m_ObjectHideFlags: 0

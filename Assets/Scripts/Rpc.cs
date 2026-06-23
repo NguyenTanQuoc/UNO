@@ -28,7 +28,7 @@ public class Rpc : NetworkBehaviour
     [ClientRpc]
     public void UpdateGameStateClientRpc(ulong clientId)
     {
-        if (!UNO.Main.Check && Lobby.Main.IsGameStarted.Value)
+        if (!UNO.Main.IsMatchInProgress && Lobby.Main.IsGameStarted.Value)
         {
             var client = UNO.PlayerList.FirstOrDefault(p => p.GetComponent<Player>().ID.Value == clientId);
             if (client != null)
@@ -48,12 +48,12 @@ public class Rpc : NetworkBehaviour
                 Lobby.Main.Restart();
             }
         }
-        if (!UNO.Main.Check && !Lobby.Main.IsGameStarted.Value)
+        if (!UNO.Main.IsMatchInProgress && !Lobby.Main.IsGameStarted.Value)
         {
             Lobby.Main.PlayersList.Remove(Lobby.Main.PlayersList.FirstOrDefault(p => p.ID.Value == clientId));
             Main.ResetDisplayServerRpc();
         }
-        else if (UNO.Main.Check)
+        else if (UNO.Main.IsMatchInProgress)
         {
             var client = UNO.PlayerList.FirstOrDefault(p => p.GetComponent<Player>().ID.Value == clientId);
             if (client != null)
@@ -71,7 +71,7 @@ public class Rpc : NetworkBehaviour
                         Lobby.Main.IsGameStarted.Value = false;
                     }
                     Lobby.Main.Restart();
-                    UNO.Main.Check = false;
+                    UNO.Main.IsMatchInProgress = false;
                 }
             }
         }
@@ -89,29 +89,17 @@ public class Rpc : NetworkBehaviour
     [ClientRpc]
     public void DeleteCardClientRpc(int cardId)
     {
-        // Lấy đúng người chơi vừa đánh bài
         var actionPlayer = UNO.GetCurrentPlayer();
-
-        // Xóa bài & cập nhật giao diện
         actionPlayer.CardList.Remove(Cards.GetCardById(cardId));
         actionPlayer.InSteak.Clear();
-        actionPlayer.GetComponent<PlayerUI>().UpdateUI();
+        UNO.PlayerList[Game.CurrentPlayer].GetComponent<PlayerUI>().UpdateUI();
         UI.Main.UpdateUICard();
-
-        // ---- CHỖ ÔNG TÌM NẰM Ở ĐÂY NÈ ----
-        // Kiểm tra tay bài của người vừa đánh
         if (actionPlayer.CardList.Count < 1)
         {
-            // CHỈ SERVER mới có quyền tuyên bố kết thúc game để tránh loạn
             if (IsServer)
             {
-                // 1. Lấy tên người chiến thắng
                 string winnerName = actionPlayer.name;
-
-                // 2. Kêu tất cả các máy hiện Message Box lên
                 ShowWinnerClientRpc(winnerName);
-
-                // 3. Server bắt đầu bấm giờ 3 giây
                 StartCoroutine(Delay());
             }
         }
@@ -119,16 +107,9 @@ public class Rpc : NetworkBehaviour
 
     private IEnumerator Delay()
     {
-        // Đánh dấu game đã kết thúc
         Lobby.Main.IsGameStarted.Value = false;
-
-        // Chờ 3 giây
         yield return new WaitForSeconds(3);
-
-        // Ẩn Message Box đi
         end.SetActive(false);
-
-        // Gọi lệnh ClientRpc ở file Lobby để lôi TẤT CẢ cùng về Lobby
         Lobby.Main.TriggerRestartClientRpc();
     }
     #endregion

@@ -6,20 +6,21 @@ using System.Collections.Generic;
 public class UNO : NetworkBehaviour
 {
     [Header("References")]
-    [SerializeField] private GameObject grid;
-    [SerializeField] private GameObject cardDeal;
-    public bool Check { get; set; }
+    [SerializeField] private GameObject Table;
+    [SerializeField] private GameObject CardDeal;
+
     public static List<GameObject> PlayerList { get; set; }
     public static UNO Main { get; private set; }
-    private readonly List<GameObject> Temp = new();
+    public bool IsMatchInProgress { get; set; }
     public Coroutine GameCoroutine { get; set; }
+    private readonly List<GameObject> Temp = new();
 
     #region Call When Game Start
     private void Awake()
     {
         PlayerList = new List<GameObject>();
         Main = this;
-        Check = false;
+        IsMatchInProgress = false;
         GameCoroutine = null;
     }
     #endregion
@@ -45,7 +46,7 @@ public class UNO : NetworkBehaviour
             foreach (GameObject p in PlayerList)
             {
                 CheckAI(p);
-                CardDeal(p);
+                DealCard(p);
                 Cards.Main.CardRemoveServerRpc();
                 yield return new WaitForSeconds(0.5f);
             }
@@ -54,14 +55,14 @@ public class UNO : NetworkBehaviour
         {
             if (Cards.GetCardById(Cards.RandomCards[i]).cardType == Card.CardType.Number)
             {
-                Table.Main.UpdateCard(Cards.RandomCards[i]);
+                global::Table.Main.UpdateCard(Cards.RandomCards[i]);
                 Cards.Main.CardRemoveServerRpc();
                 break;
             }
         }
         GetCurrentPlayer().Turn = true;
         Player.TimeInTurn = 20f;
-        Check = true;
+        IsMatchInProgress = true;
         DeleteCardDeal();
         UI.Main.UpdateUICard();
         foreach (GameObject p in PlayerList)
@@ -83,14 +84,14 @@ public class UNO : NetworkBehaviour
         }
     }
 
-    private void CardDeal(GameObject p)
+    private void DealCard(GameObject p)
     {
-        var card = Instantiate(cardDeal, grid.transform.position, Quaternion.identity, grid.transform.parent.transform);
+        var card = Instantiate(CardDeal, Table.transform.position, Quaternion.identity, Table.transform.parent.transform);
         Temp.Add(card);
         if (Players.Main.PlayersList.Contains(p.GetComponent<Player>()))
         {
             int index = Players.Main.PlayersList.IndexOf(p.GetComponent<Player>());
-            Vector3 vector = grid.transform.GetChild(index + 2).GetComponent<RectTransform>().position;
+            Vector3 vector = Table.transform.GetChild(index + 2).GetComponent<RectTransform>().position;
             ITween.MoveTo(card, new Vector3(vector.x, vector.y - 8, 0), 0.25f);
             ITween.ScaleTo(card, new Vector3(0.5f, 0.5f, 0.5f), 0.25f);
         }
