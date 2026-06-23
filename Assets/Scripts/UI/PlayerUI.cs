@@ -6,7 +6,7 @@ public class PlayerUI : NetworkBehaviour
 {
     #region Attributes
     [Header("References")]
-    [SerializeField] private GameObject Grid;
+    [SerializeField] private GameObject Hand;
 
     [Header("Prefabs")]
     [SerializeField] private CardUI UI;
@@ -26,21 +26,18 @@ public class PlayerUI : NetworkBehaviour
 
     public void UpdateUI()
     {
-        if (!IsOwner) return;
+        if (!IsOwner) 
+            return;
         ClearCards();
         for (int i = 0; i < player.CardList.Count; i++)
         {
             var cards = player.CardList[i];
-            var card = Instantiate(UI, Grid.transform.position, Quaternion.identity, Grid.transform);
+            var card = Instantiate(UI, Hand.transform.position, Quaternion.identity, Hand.transform);
             UpdateSpacing();
-            if (UNO.Main.Check)
-            {
+            if (UNO.Main.IsMatchInProgress)
                 card.gameObject.SetActive(true);
-            }
             else
-            {
                 card.gameObject.SetActive(false);
-            }
             card.GetComponent<Image>().color = Color.gray;
             card.UpdateUI(cards, player);
         }
@@ -48,29 +45,23 @@ public class PlayerUI : NetworkBehaviour
 
     private void UpdateSpacing()
     {
-        if (Grid.transform.childCount > 5)
+        if (Hand.transform.childCount > 5)
         {
-            Grid.GetComponent<HorizontalLayoutGroup>().spacing = -1520;
-            if (Grid.transform.childCount > 10)
-            {
-                Grid.GetComponent<HorizontalLayoutGroup>().spacing = -1320;
-            }
-            if (Grid.transform.childCount > 20)
-            {
-                Grid.GetComponent<HorizontalLayoutGroup>().spacing = -820;
-            }
+            Hand.GetComponent<HorizontalLayoutGroup>().spacing = -1520;
+            if (Hand.transform.childCount > 10)
+                Hand.GetComponent<HorizontalLayoutGroup>().spacing = -1320;
+            if (Hand.transform.childCount > 20)
+                Hand.GetComponent<HorizontalLayoutGroup>().spacing = -820;
         }
     }
 
     private void ClearCards()
     {
-        if (Grid.transform.childCount < 1)
-        {
+        if (Hand.transform.childCount < 1)
             return;
-        }
-        for (int i = 0; i < Grid.transform.childCount; i++)
+        for (int i = 0; i < Hand.transform.childCount; i++)
         {
-            Destroy(Grid.transform.GetChild(i).gameObject);
+            Destroy(Hand.transform.GetChild(i).gameObject);
         }
     }
 }

@@ -48,7 +48,7 @@ public class Lobby : NetworkBehaviour
     public void Restart()
     {
         GameObject temp;
-        if (UNO.Main.Check)
+        if (UNO.Main.IsMatchInProgress)
         {
             for (int i = 0; i < UNO.PlayerList.Count - 1; i++)
             {
@@ -62,7 +62,7 @@ public class Lobby : NetworkBehaviour
                     }
                 }
             }
-            UNO.Main.Check = false;
+            UNO.Main.IsMatchInProgress = false;
         }
         foreach (GameObject player in UNO.PlayerList)
         {
@@ -71,9 +71,7 @@ public class Lobby : NetworkBehaviour
             player.GetComponent<Player>().Turn = false;
             player.GetComponent<PlayerUI>().UpdateUI();
             if (player.name == NetworkManager.Singleton.LocalClient.PlayerObject.name)
-            {
                 player.transform.GetChild(0).gameObject.SetActive(false);
-            }
         }
         Desk.Main.draw.interactable = false;
         Table.Main.CardList.Clear();
@@ -180,10 +178,10 @@ public class Lobby : NetworkBehaviour
         UI.Main.UpdateUI();
         UNO.Main.StartGame();
     }
+
     [ClientRpc]
     public void TriggerRestartClientRpc()
     {
-       
         Restart();
     }
 }

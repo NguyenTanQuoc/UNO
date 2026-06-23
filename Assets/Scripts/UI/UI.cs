@@ -8,13 +8,13 @@ public class UI : NetworkBehaviour
 {
     #region Attributes
     [Header("References")]
-    [SerializeField] private GameObject Grid;
-    [SerializeField] private GameObject ui;
-    [SerializeField] private Image sprite;
+    [SerializeField] private GameObject Table;
+    [SerializeField] private GameObject PlayerSlot;
+    [SerializeField] private Image CardBackImage;
 
     public static UI Main { get; private set; }
     public Player Player { get; private set; }
-    public static readonly List<Vector3> list = new()
+    public static readonly List<Vector3> posPlayerList = new()
     {
         new Vector3(600, 0, 0),
         new Vector3(400, 300, 0),
@@ -59,39 +59,35 @@ public class UI : NetworkBehaviour
         ClearUpdateUI();
         for (int i = 0; i < Players.Main.PlayersList.Count; i++)
         {
-            var card = Instantiate(ui, Grid.transform.position, Quaternion.identity, Grid.transform);
+            var card = Instantiate(PlayerSlot, Table.transform.position, Quaternion.identity, Table.transform);
             card.GetComponentInChildren<TextMeshProUGUI>().text = Players.Main.PlayersList[i].name;
             if (Players.Main.PlayersList.Count == 1)
             {
-                card.GetComponent<RectTransform>().localPosition = list[2];
+                card.GetComponent<RectTransform>().localPosition = posPlayerList[2];
             }
             else if (Players.Main.PlayersList.Count == 2)
             {
                 if (i == 0)
-                {
-                    card.GetComponent<RectTransform>().localPosition = list[1];
-                }
+                    card.GetComponent<RectTransform>().localPosition = posPlayerList[1];
                 else
-                {
-                    card.GetComponent<RectTransform>().localPosition = list[3];
-                }
+                    card.GetComponent<RectTransform>().localPosition = posPlayerList[3];
             }
             else if (Players.Main.PlayersList.Count == 3)
             {
-                card.GetComponent<RectTransform>().localPosition = list[i + 1];
+                card.GetComponent<RectTransform>().localPosition = posPlayerList[i + 1];
             }
             else
             {
-                card.GetComponent<RectTransform>().localPosition = list[i];
+                card.GetComponent<RectTransform>().localPosition = posPlayerList[i];
             }
         }
     }
 
     public void ClearUpdateUI()
     {
-        for (int i = 2; i < Grid.transform.childCount; i++)
+        for (int i = 2; i < Table.transform.childCount; i++)
         {
-            Destroy(Grid.transform.GetChild(i).gameObject);
+            Destroy(Table.transform.GetChild(i).gameObject);
         }
     }
 
@@ -100,29 +96,21 @@ public class UI : NetworkBehaviour
         ClearUpdateUICard();
         foreach (Player p in Players.Main.PlayersList)
         {
-            for (int i = 2; i < Grid.transform.childCount; i++)
+            for (int i = 2; i < Table.transform.childCount; i++)
             {
                 for (int j = 0; j < p.CardList.Count; j++)
                 {
-                    if (Grid.transform.GetChild(i).GetComponentInChildren<TextMeshProUGUI>().text == p.name)
+                    if (Table.transform.GetChild(i).GetComponentInChildren<TextMeshProUGUI>().text == p.name)
                     {
-                        var temp = Instantiate(sprite, Grid.transform.GetChild(i).GetChild(0).transform);
-                        if (UNO.Main.Check)
-                        {
+                        var temp = Instantiate(CardBackImage, Table.transform.GetChild(i).GetChild(0).transform);
+                        if (UNO.Main.IsMatchInProgress)
                             temp.gameObject.SetActive(true);
-                        }
                         else
-                        {
                             temp.gameObject.SetActive(false);
-                        }
                         if (UNO.PlayerList[Game.CurrentPlayer].name == p.name)
-                        {
                             temp.GetComponent<Image>().color = Color.white;
-                        }
                         else
-                        {
                             temp.GetComponent<Image>().color = Color.gray;
-                        }
                     }
                 }
             }
@@ -131,11 +119,11 @@ public class UI : NetworkBehaviour
 
     private void ClearUpdateUICard()
     {
-        for (int i = 2; i < Grid.transform.childCount; i++)
+        for (int i = 2; i < Table.transform.childCount; i++)
         {
-            for (int j = 0; j < Grid.transform.GetChild(i).GetChild(0).childCount; j++)
+            for (int j = 0; j < Table.transform.GetChild(i).GetChild(0).childCount; j++)
             {
-                Destroy(Grid.transform.GetChild(i).GetChild(0).GetChild(j).gameObject);
+                Destroy(Table.transform.GetChild(i).GetChild(0).GetChild(j).gameObject);
             }
         }
     }
